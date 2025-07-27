@@ -47,6 +47,7 @@ kotlin {
             implementation(compose.components.uiToolingPreview)
             implementation(libs.androidx.lifecycle.viewmodel)
             implementation(libs.androidx.lifecycle.runtimeCompose)
+            implementation(libs.platformtools.darkmodedetector)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
@@ -97,9 +98,7 @@ compose.desktop {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
             packageName = "ru.dumch.spaced"
             packageVersion = "1.0.0"
-            jvmArgs(
-                "-Dapple.awt.application.appearance=dark"       // force dark appearance
-            )
+            jvmArgs("-Dapple.awt.application.appearance=system")
         }
     }
 }

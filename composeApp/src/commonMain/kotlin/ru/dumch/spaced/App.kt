@@ -14,14 +14,13 @@ import androidx.compose.ui.Modifier
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import ru.dumch.spaced.ui.AppTheme
-import ru.dumch.spaced.ui.Toolbar
 import spacedrepetitionai.composeapp.generated.resources.Res
 import spacedrepetitionai.composeapp.generated.resources.compose_multiplatform
 
 @Composable
 @Preview
 fun App() {
-    AppTheme(darkTheme = true) {
+    AppTheme() {
         var showContent: Boolean by remember { mutableStateOf(false) }
         Column(
             modifier = Modifier
