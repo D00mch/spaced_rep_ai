@@ -12,13 +12,16 @@ androidx-lifecycle = "2.9.1"
 androidx-testExt = "1.2.1"
 composeHotReload = "1.0.0-alpha11"
 composeMultiplatform = "1.8.2"
+jmdns = "3.6.1"
 junit = "4.13.2"
+kodeinDi = "7.22.0"
 kotlin = "2.2.0"
 kotlinx-coroutines = "1.10.2"
 kdroidfilter-platformtools = "0.5.0"
-jmdns-ver = "3.6.1"
 
 [libraries]
+jmdns = { module = "org.jmdns:jmdns", version.ref = "jmdns" }
+kodein-di-framework-compose = { module = "org.kodein.di:kodein-di-framework-compose", version.ref = "kodeinDi" }
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
 kotlin-testJunit = { module = "org.jetbrains.kotlin:kotlin-test-junit", version.ref = "kotlin" }
 junit = { module = "junit:junit", version.ref = "junit" }
@@ -32,7 +35,6 @@ androidx-lifecycle-viewmodel = { module = "org.jetbrains.androidx.lifecycle:life
 androidx-lifecycle-runtimeCompose = { module = "org.jetbrains.androidx.lifecycle:lifecycle-runtime-compose", version.ref = "androidx-lifecycle" }
 kotlinx-coroutinesSwing = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-swing", version.ref = "kotlinx-coroutines" }
 platformtools-darkmodedetector = { module = "io.github.kdroidfilter:platformtools.darkmodedetector", version.ref = "kdroidfilter-platformtools"}
-jmdns = { module = "org.jmdns:jmdns", version.ref = "jmdns-ver"}
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }

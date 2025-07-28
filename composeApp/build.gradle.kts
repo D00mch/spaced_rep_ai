@@ -18,21 +18,24 @@ kotlin {
         }
     }
     
-    listOf(
-        iosX64(),
-        iosArm64(),
-        iosSimulatorArm64()
-    ).forEach { iosTarget ->
-        iosTarget.binaries.framework {
-            baseName = "ComposeApp"
-            isStatic = true
-        }
-    }
+//    listOf(
+//        iosX64(),
+//        iosArm64(),
+//        iosSimulatorArm64()
+//    ).forEach { iosTarget ->
+//        iosTarget.binaries.framework {
+//            baseName = "ComposeApp"
+//            isStatic = true
+//        }
+//    }
     
     jvm("desktop")
 
     sourceSets {
+        val commonMain by getting
+        
         val jvmMain by creating
+        jvmMain.dependsOn(commonMain)
         jvmMain.dependencies {
             implementation(libs.jmdns)
         }
@@ -62,6 +65,7 @@ kotlin {
             implementation(libs.androidx.lifecycle.viewmodel)
             implementation(libs.androidx.lifecycle.runtimeCompose)
             implementation(libs.platformtools.darkmodedetector)
+            implementation(libs.kodein.di.framework.compose)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
