@@ -30,10 +30,9 @@ kotlin {
     }
     
     jvm("desktop")
-    jvm()
 
     sourceSets {
-        val jvmMain by getting
+        val jvmMain by creating
         jvmMain.dependencies {
             implementation(libs.jmdns)
         }
