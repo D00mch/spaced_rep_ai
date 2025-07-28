@@ -30,10 +30,25 @@ kotlin {
     }
     
     jvm("desktop")
-    
+    jvm()
+
     sourceSets {
-        val desktopMain by getting
-        
+        val jvmMain by getting
+        jvmMain.dependencies {
+            implementation(libs.jmdns)
+        }
+
+        val desktopMain by getting {
+            dependsOn(jvmMain)
+        }
+        desktopMain.dependencies {
+            implementation(compose.desktop.currentOs)
+            implementation(libs.kotlinx.coroutinesSwing)
+        }
+
+        val androidMain by getting {
+            dependsOn(jvmMain)
+        }
         androidMain.dependencies {
             implementation(compose.preview)
             implementation(libs.androidx.activity.compose)
@@ -51,10 +66,6 @@ kotlin {
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
-        }
-        desktopMain.dependencies {
-            implementation(compose.desktop.currentOs)
-            implementation(libs.kotlinx.coroutinesSwing)
         }
     }
 }
