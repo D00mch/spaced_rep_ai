@@ -4,5 +4,13 @@
 <dict>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
+
+    <key>NSLocalNetworkUsageDescription</key>
+    <string>Required to discover local network devices</string>
+    <key>SpacedRepetitionAI</key>
+    <array>
+        <string>_http._tcp</string>
+    </array>
+
 </dict>
 </plist>

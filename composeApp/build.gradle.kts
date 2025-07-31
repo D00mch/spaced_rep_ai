@@ -67,6 +67,7 @@ kotlin {
             implementation(libs.platformtools.darkmodedetector)
             implementation(libs.kodein.di.framework.compose)
             api(libs.logging)
+            api(libs.com.appstractive.dns.sd.kt)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
@@ -98,11 +99,14 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
+
+        isCoreLibraryDesugaringEnabled = true // com.appstractive:dns-sd-kt needs this
     }
 }
 
 dependencies {
     debugImplementation(compose.uiTooling)
+    coreLibraryDesugaring(libs.desugar.jdk.libs) // com.appstractive:dns-sd-kt needs this
 }
 
 compose.desktop {

@@ -6,7 +6,7 @@ import org.kodein.di.instance
 import ru.dumch.spaced.Greeting
 import ru.dumch.spaced.getPlatform
 
-val mainDiModule = DI.Module("main") {
+val diCommonMainModule = DI.Module("main") {
     bindSingleton { getPlatform() }
     bindSingleton { Greeting(instance()) }
 }
