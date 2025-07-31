@@ -16,6 +16,7 @@ import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.kodein.di.compose.localDI
 import org.kodein.di.compose.withDI
+import ru.dumch.spaced.di.mainDiModule
 import ru.dumch.spaced.ui.AppTheme
 import spacedrepetitionai.composeapp.generated.resources.Res
 import spacedrepetitionai.composeapp.generated.resources.compose_multiplatform
