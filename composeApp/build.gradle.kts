@@ -37,7 +37,6 @@ kotlin {
         val jvmMain by creating
         jvmMain.dependsOn(commonMain)
         jvmMain.dependencies {
-            implementation(libs.jmdns)
         }
 
         val desktopMain by getting {
@@ -63,9 +62,11 @@ kotlin {
             implementation(compose.components.resources)
             implementation(compose.components.uiToolingPreview)
             implementation(libs.androidx.lifecycle.viewmodel)
+            implementation(libs.androidx.lifecycle.viewmodel.compose)
             implementation(libs.androidx.lifecycle.runtimeCompose)
             implementation(libs.platformtools.darkmodedetector)
             implementation(libs.kodein.di.framework.compose)
+            api(libs.logging)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
