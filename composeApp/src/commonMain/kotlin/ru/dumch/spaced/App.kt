@@ -1,5 +1,6 @@
 package ru.dumch.spaced
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -46,6 +47,11 @@ fun App() {
                                 is DiscoveryEvent.Removed -> "Service ${ev.simpleName()} is removed"
                                 is DiscoveryEvent.Resolved -> "Service ${ev.simpleName()} is found"
                             }
+                        }
+
+                        is SyncSideEffect.HandShakeResponse -> {
+                            val msg = effect.response
+                            "The message is: $msg"
                         }
                     }
                     snackBarHostState.showSnackbar(message = snackMsg, withDismissAction = true)
@@ -136,6 +142,9 @@ private fun ScanView(viewModel: SyncViewModel) {
                             Text(service.txt.toList().joinToString { "${it.first}=${it.second?.decodeToString()}" })
                         }
                     },
+                    modifier = Modifier.clickable {
+                        viewModel.send(SyncEvent.HandShake(service))
+                    }
                 )
             }
         }

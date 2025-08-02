@@ -14,6 +14,7 @@ import org.kodein.di.DI
 import org.kodein.di.DIAware
 import org.kodein.di.instance
 import ru.dumch.spaced.sync.SyncCommon.SERVICE_TYPE
+import ru.dumch.spaced.sync.SyncSideEffect.*
 import ru.dumch.spaced.ui.Event
 import ru.dumch.spaced.ui.SideEffect
 import ru.dumch.spaced.ui.State
@@ -34,41 +35,58 @@ internal sealed interface SyncEvent : Event {
     object RegisterOff : SyncEvent
     object ScanOn : SyncEvent
     object ScanOff : SyncEvent
+    data class HandShake(val service: DiscoveredService) : SyncEvent
 }
 
 internal sealed interface SyncSideEffect : SideEffect {
     object RegisterConnected : SyncSideEffect
     object RegisterDisconnected : SyncSideEffect
     data class ServiceDiscovered(val event: DiscoveryEvent) : SyncSideEffect
+    data class HandShakeResponse(val response: String): SyncSideEffect
 }
 
-internal class SyncViewModel(override val di: DI) : 
+internal class SyncViewModel(override val di: DI) :
     BaseViewModel<SyncState, SyncEvent, SyncSideEffect>(), DIAware {
-    
+
     private val l = logging(tag = SyncViewModel::class.simpleName)
-    private val netService: NetService by di.instance()
+
+    // DNS discovery related
+    private val dnsService: NetService by di.instance()
     private var scanJob: Job? = null
     private var discoveredServices = ConcurrentHashMap<String, DiscoveredService>()
 
-    override fun initialState() = SyncState()
+    // P2P communication related
+    private val syncServer: SyncDataServer by di.instance()
+    private val syncClient: SyncDataClient by di.instance()
 
     init {
         l.info { "init" }
         init()
+        syncServer.start()
+        syncClient.start()
         viewModelScope.launch {
-            netService.isRegistered.collect { isRegistered ->
-                val eff = if (isRegistered) SyncSideEffect.RegisterConnected else SyncSideEffect.RegisterDisconnected
+            dnsService.isRegistered.collect { isRegistered ->
+                val eff = if (isRegistered) RegisterConnected else RegisterDisconnected
                 send(eff)
             }
         }
     }
 
+    override fun onCleared() {
+        super.onCleared()
+        syncServer.stop()
+        syncClient.stop()
+    }
+
+    override fun initialState() = SyncState()
+
     override suspend fun handleSideEffect(effect: SyncSideEffect) {
         l.info { "handleSideEffect: $effect" }
         when (effect) {
-            is SyncSideEffect.RegisterConnected -> setState { copy(registered = true, registerInProgress = false) }
-            is SyncSideEffect.RegisterDisconnected -> setState { copy(registered = false, registerInProgress = false) }
-            is SyncSideEffect.ServiceDiscovered -> onServiceDiscovered(SyncSideEffect.ServiceDiscovered(effect.event))
+            is RegisterConnected -> setState { copy(registered = true, registerInProgress = false) }
+            is RegisterDisconnected -> setState { copy(registered = false, registerInProgress = false) }
+            is ServiceDiscovered -> onServiceDiscovered(ServiceDiscovered(effect.event))
+            is HandShakeResponse -> Unit
         }
     }
 
@@ -78,13 +96,13 @@ internal class SyncViewModel(override val di: DI) :
             is SyncEvent.TabSelected -> setState { copy(tabIdx = event.i) }
             SyncEvent.RegisterOn -> {
                 if (currentState.registerInProgress) return
-                netService.register()
+                dnsService.register()
                 setState { copy(registerInProgress = true) }
             }
 
             SyncEvent.RegisterOff -> {
                 if (!currentState.registered) return
-                netService.unregister()
+                dnsService.unregister()
                 setState { copy(registerInProgress = true) }
             }
 
@@ -99,15 +117,20 @@ internal class SyncViewModel(override val di: DI) :
                 discoveredServices.clear()
                 scanJob = viewModelScope.launch(Dispatchers.IO) {
                     discoverServices(SERVICE_TYPE).collect { discoveryEvent: DiscoveryEvent ->
-                        send(SyncSideEffect.ServiceDiscovered(discoveryEvent))
+                        send(ServiceDiscovered(discoveryEvent))
                     }
                 }
                 setState { copy(isScanning = true) }
             }
+
+            is SyncEvent.HandShake -> {
+                val msg = syncClient.headShake(event.service)
+                send(HandShakeResponse(msg))
+            }
         }
     }
 
-    private suspend fun onServiceDiscovered(effect: SyncSideEffect.ServiceDiscovered) {
+    private suspend fun onServiceDiscovered(effect: ServiceDiscovered) {
         val discoveryEvent: DiscoveryEvent = effect.event
         when (discoveryEvent) {
             is DiscoveryEvent.Discovered -> {

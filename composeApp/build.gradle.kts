@@ -68,6 +68,8 @@ kotlin {
             implementation(libs.kodein.di.framework.compose)
             api(libs.logging)
             api(libs.com.appstractive.dns.sd.kt)
+            implementation(libs.bundles.ktor.client)
+            implementation(libs.bundles.ktor.server)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)

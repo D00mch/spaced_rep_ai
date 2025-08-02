@@ -15,10 +15,11 @@ composeHotReload = "1.0.0-alpha11"
 composeMultiplatform = "1.8.2"
 desugar_jdk_libs = "2.1.5"
 junit = "4.13.2"
+kdroidfilter-platformtools = "0.5.0"
 kodeinDi = "7.22.0"
 kotlin = "2.2.0"
 kotlinx-coroutines = "1.10.2"
-kdroidfilter-platformtools = "0.5.0"
+ktor = "3.2.3"
 logging = "2.0.3"
 
 [libraries]
@@ -38,8 +39,30 @@ kodein-di-framework-compose = { module = "org.kodein.di:kodein-di-framework-comp
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
 kotlin-testJunit = { module = "org.jetbrains.kotlin:kotlin-test-junit", version.ref = "kotlin" }
 kotlinx-coroutinesSwing = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-swing", version.ref = "kotlinx-coroutines" }
+ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
+ktor-client-darwin = { module = "io.ktor:ktor-client-darwin", version.ref = "ktor" }
+ktor-client-cio = { module = "io.ktor:ktor-client-cio", version.ref = "ktor" }
+ktor-client-negotiation = { module = "io.ktor:ktor-client-content-negotiation", version.ref = "ktor" }
+ktor-serialization = { module = "io.ktor:ktor-serialization-kotlinx-json", version.ref = "ktor" }
+ktor-server-core = { module = "io.ktor:ktor-server-core", version.ref = "ktor" }
+ktor-server-cio = { module = "io.ktor:ktor-server-cio", version.ref = "ktor" }
+ktor-server-negotiation = { module = "io.ktor:ktor-server-content-negotiation", version.ref = "ktor" }
 logging = { module = "com.diamondedge:logging", version.ref = "logging" }
-platformtools-darkmodedetector = { module = "io.github.kdroidfilter:platformtools.darkmodedetector", version.ref = "kdroidfilter-platformtools"}
+platformtools-darkmodedetector = { module = "io.github.kdroidfilter:platformtools.darkmodedetector", version.ref = "kdroidfilter-platformtools" }
+
+[bundles]
+ktor-server = [
+    "ktor-server-core",
+    "ktor-server-cio",
+    "ktor-server-negotiation",
+    "ktor-serialization"
+]
+ktor-client = [
+    "ktor-client-core",
+    "ktor-client-cio",
+    "ktor-client-negotiation",
+    "ktor-serialization"
+]
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }
