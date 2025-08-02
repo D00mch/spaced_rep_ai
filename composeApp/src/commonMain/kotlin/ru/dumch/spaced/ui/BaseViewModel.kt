@@ -51,7 +51,6 @@ abstract class BaseViewModel<STATE : State, EVENT : Event, EFFECT : SideEffect> 
     abstract suspend fun handleEvent(event: EVENT)
     abstract suspend fun handleSideEffect(effect: EFFECT)
 
-    // Existing utility functions
     open val ioDispatchers: CoroutineDispatcher = Dispatchers.IO
 
     fun ioLaunch(block: suspend CoroutineScope.() -> Unit): Job =
