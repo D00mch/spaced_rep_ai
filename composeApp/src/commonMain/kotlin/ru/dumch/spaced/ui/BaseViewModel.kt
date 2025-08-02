@@ -2,20 +2,11 @@ package ru.dumch.spaced.ui
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.FlowPreview
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.async
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.launch
-import kotlin.time.Duration.Companion.seconds
 
 interface State
 interface Event
@@ -33,9 +24,8 @@ abstract class BaseViewModel<STATE : State, EVENT : Event, EFFECT : SideEffect> 
 
     protected val currentState: STATE get() = _uiState.value
 
-    @OptIn(FlowPreview::class)
     protected fun init() {
-        viewModelScope.launch { _events.debounce (1.seconds).collect { handleEvent(it) } }
+        viewModelScope.launch { _events.collect { handleEvent(it) } }
         viewModelScope.launch { _effects.collect { handleSideEffect(it) } }
     }
 
