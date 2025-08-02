@@ -6,7 +6,6 @@ import com.appstractive.dnssd.DiscoveryEvent
 import com.appstractive.dnssd.NetService
 import com.appstractive.dnssd.discoverServices
 import com.appstractive.dnssd.key
-import com.appstractive.dnssd.netService
 import com.diamondedge.logging.logging
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
