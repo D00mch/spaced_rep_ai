@@ -6,6 +6,7 @@ import com.appstractive.dnssd.DiscoveryEvent
 import com.appstractive.dnssd.NetService
 import com.appstractive.dnssd.discoverServices
 import com.appstractive.dnssd.key
+import com.appstractive.dnssd.netService
 import com.diamondedge.logging.logging
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -73,6 +74,7 @@ internal class SyncViewModel(override val di: DI) :
     }
 
     override fun onCleared() {
+        ioLaunch { dnsService.unregister() }
         super.onCleared()
         syncServer.stop()
         syncClient.stop()
@@ -103,7 +105,6 @@ internal class SyncViewModel(override val di: DI) :
             SyncEvent.RegisterOff -> {
                 if (!currentState.registered) return
                 dnsService.unregister()
-                setState { copy(registerInProgress = true) }
             }
 
             SyncEvent.ScanOff -> {
