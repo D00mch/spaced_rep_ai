@@ -18,6 +18,7 @@ import org.kodein.di.compose.localDI
 import ru.dumch.spaced.sync.SyncEvent
 import ru.dumch.spaced.sync.SyncSideEffect
 import ru.dumch.spaced.sync.SyncViewModel
+import ru.dumch.spaced.sync.simpleName
 import ru.dumch.spaced.ui.AppTheme
 
 @Composable
@@ -39,7 +40,13 @@ fun App() {
                     val snackMsg = when (effect) {
                         is SyncSideEffect.RegisterConnected -> "Service registered successfully"
                         is SyncSideEffect.RegisterDisconnected -> "Service unregistered gracefully"
-                        is SyncSideEffect.ServiceDiscovered -> "Another service (${effect.event.service.name}) is discovered"
+                        is SyncSideEffect.ServiceDiscovered -> {
+                            when (val ev: DiscoveryEvent = effect.event) {
+                                is DiscoveryEvent.Discovered -> return@collect
+                                is DiscoveryEvent.Removed -> "Service ${ev.simpleName()} is removed"
+                                is DiscoveryEvent.Resolved -> "Service ${ev.simpleName()} is found"
+                            }
+                        }
                     }
                     snackBarHostState.showSnackbar(message = snackMsg, withDismissAction = true)
                 }

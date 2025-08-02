@@ -77,11 +77,13 @@ internal class SyncViewModel(override val di: DI) :
         when (event) {
             is SyncEvent.TabSelected -> setState { copy(tabIdx = event.i) }
             SyncEvent.RegisterOn -> {
+                if (currentState.registerInProgress) return
                 netService.register()
                 setState { copy(registerInProgress = true) }
             }
 
             SyncEvent.RegisterOff -> {
+                if (!currentState.registered) return
                 netService.unregister()
                 setState { copy(registerInProgress = true) }
             }
@@ -93,6 +95,7 @@ internal class SyncViewModel(override val di: DI) :
             }
 
             SyncEvent.ScanOn -> {
+                if (currentState.isScanning) return
                 discoveredServices.clear()
                 scanJob = viewModelScope.launch(Dispatchers.IO) {
                     discoverServices(SERVICE_TYPE).collect { discoveryEvent: DiscoveryEvent ->
@@ -105,7 +108,7 @@ internal class SyncViewModel(override val di: DI) :
     }
 
     private suspend fun onServiceDiscovered(effect: SyncSideEffect.ServiceDiscovered) {
-        val discoveryEvent = effect.event
+        val discoveryEvent: DiscoveryEvent = effect.event
         when (discoveryEvent) {
             is DiscoveryEvent.Discovered -> {
                 discoveryEvent.resolve()
