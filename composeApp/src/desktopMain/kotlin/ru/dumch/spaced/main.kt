@@ -22,7 +22,6 @@ fun main() {
                 title = "SpacedRepetitionAI",
             ) {
                 val di = localDI()
-                val viewModel = viewModel { SyncViewModel(di) }
                 App()
             }
         }

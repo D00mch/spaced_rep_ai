@@ -9,14 +9,15 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.flowWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.appstractive.dnssd.*
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.kodein.di.compose.localDI
-import org.kodein.di.instance
-import ru.dumch.spaced.sync.SyncCommon.SERVICE_TYPE
+import ru.dumch.spaced.sync.SyncEvent
+import ru.dumch.spaced.sync.SyncSideEffect
+import ru.dumch.spaced.sync.SyncViewModel
 import ru.dumch.spaced.ui.AppTheme
 
 @Composable
@@ -24,72 +25,85 @@ import ru.dumch.spaced.ui.AppTheme
 @Preview
 fun App() {
     val di = localDI()
-    val service: NetService by di.instance()
+    val viewModel = viewModel { SyncViewModel(di) }
     AppTheme {
-        var selectedTab by remember { mutableStateOf(0) }
+        val state = viewModel.uiState.collectAsState().value
+        val lifecycle = LocalLifecycleOwner.current.lifecycle
+        val snackBarHostState = remember { SnackbarHostState() }
 
-        Scaffold { padding ->
-            Column(
-                modifier = Modifier.fillMaxSize().padding(padding),
-            ) {
-                PrimaryTabRow(
-                    selectedTabIndex = selectedTab,
-                ) {
-                    Tab(
-                        selected = selectedTab == 0,
-                        onClick = { selectedTab = 0 },
-                        text = { Text(text = "Advertise") }
-                    )
-
-                    Tab(
-                        selected = selectedTab == 1,
-                        onClick = { selectedTab = 1 },
-                        text = { Text(text = "Scan") }
-                    )
+        // Handle effects
+        LaunchedEffect(Unit) {
+            viewModel.effects
+                .flowWithLifecycle(lifecycle)
+                .collect { effect ->
+                    val snackMsg = when (effect) {
+                        is SyncSideEffect.RegisterConnected -> "Service registered successfully"
+                        is SyncSideEffect.RegisterDisconnected -> "Service unregistered gracefully"
+                        is SyncSideEffect.ServiceDiscovered -> "Another service (${effect.event.service.name}) is discovered"
+                    }
+                    snackBarHostState.showSnackbar(message = snackMsg, withDismissAction = true)
                 }
+        }
 
+        Scaffold(
+            snackbarHost = { SnackbarHost(snackBarHostState) },
+            content = { padding ->
                 Column(
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.fillMaxSize().padding(padding),
                 ) {
-                    when (selectedTab) {
-                        0 -> AdvertiseView(service)
-                        else -> ScanView()
+                    PrimaryTabRow(
+                        selectedTabIndex = state.tabIdx,
+                    ) {
+                        Tab(
+                            selected = state.tabIdx == 0,
+                            onClick = { viewModel.send(SyncEvent.TabSelected(0)) },
+                            text = { Text(text = "Advertise") }
+                        )
+                        Tab(
+                            selected = state.tabIdx == 1,
+                            onClick = { viewModel.send(SyncEvent.TabSelected(1)) },
+                            text = { Text(text = "Scan") }
+                        )
+                    }
+
+                    Column(
+                        modifier = Modifier.weight(1f),
+                    ) {
+                        when (state.tabIdx) {
+                            0 -> AdvertiseView(viewModel)
+                            else -> ScanView(viewModel)
+                        }
                     }
                 }
             }
-        }
+        )
     }
 }
 
 @Composable
-private fun AdvertiseView(service: NetService) {
-    val scope = rememberCoroutineScope()
-    val isRegistered by service.isRegistered.collectAsState()
+private fun AdvertiseView(viewModel: SyncViewModel) {
+    val state = viewModel.uiState.collectAsState().value
 
     Column {
         Text("Service Registration")
 
         ElevatedButton(
             onClick = {
-                scope.launch {
-                    if (isRegistered) {
-                        service.unregister()
-                    } else {
-                        service.register()
-                    }
+                val ev = when {
+                    state.registered -> SyncEvent.RegisterOff
+                    else -> SyncEvent.RegisterOn
                 }
+                viewModel.send(ev)
             },
         ) {
-            Text(if (isRegistered) "Stop" else "Start")
+            Text(if (state.registered) "Unregister" else "Register")
         }
     }
 }
 
 @Composable
-private fun ScanView() {
-    val scope = rememberCoroutineScope()
-    val scannedServices = remember { mutableStateMapOf<String, DiscoveredService>() }
-    var scanJob: Job? by remember { mutableStateOf(null) }
+private fun ScanView(viewModel: SyncViewModel) {
+    val state = viewModel.uiState.collectAsState().value
 
     Column {
         Row {
@@ -97,37 +111,16 @@ private fun ScanView() {
 
             ElevatedButton(
                 onClick = {
-                    if (scanJob == null) {
-                        scannedServices.clear()
-                        scanJob = scope.launch(Dispatchers.IO) {
-                            discoverServices(SERVICE_TYPE).collect {
-                                when (it) {
-                                    is DiscoveryEvent.Discovered -> {
-                                        scannedServices[it.service.key] = it.service
-                                        it.resolve()
-                                    }
-
-                                    is DiscoveryEvent.Removed -> {
-                                        scannedServices.remove(it.service.key)
-                                    }
-
-                                    is DiscoveryEvent.Resolved -> {
-                                        scannedServices[it.service.key] = it.service
-                                    }
-                                }
-                            }
-                        }
-                    } else {
-                        scanJob?.cancel()
-                    }
+                    val event = if (state.isScanning) SyncEvent.ScanOff else SyncEvent.ScanOn
+                    viewModel.send(event)
                 },
             ) {
-                Text(if (scanJob != null) "Stop" else "Start")
+                Text(if (state.isScanning) "Stop" else "Start")
             }
         }
 
         LazyColumn {
-            items(scannedServices.values.toList()) { service: DiscoveredService ->
+            items(state.scannedServices) { service: DiscoveredService ->
                 ListItem(
                     headlineContent = { Text("${service.name} (${service.host})") },
                     supportingContent = {
