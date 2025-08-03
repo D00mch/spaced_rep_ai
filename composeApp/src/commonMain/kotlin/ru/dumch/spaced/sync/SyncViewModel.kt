@@ -8,8 +8,10 @@ import com.appstractive.dnssd.discoverServices
 import com.appstractive.dnssd.key
 import com.diamondedge.logging.logging
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.kodein.di.DI
 import org.kodein.di.DIAware
 import org.kodein.di.instance
@@ -19,7 +21,6 @@ import ru.dumch.spaced.ui.Event
 import ru.dumch.spaced.ui.SideEffect
 import ru.dumch.spaced.ui.State
 import ru.dumch.spaced.ui.BaseViewModel
-import java.util.concurrent.ConcurrentHashMap
 
 internal data class SyncState(
     val registered: Boolean = false,
@@ -53,7 +54,7 @@ internal class SyncViewModel(override val di: DI) :
     // DNS discovery related
     private val dnsService: NetService by di.instance()
     private var scanJob: Job? = null
-    private var discoveredServices = ConcurrentHashMap<String, DiscoveredService>()
+    private var discoveredServices = HashMap<String, DiscoveredService>()
 
     // P2P communication related
     private val syncServer: SyncDataServer by di.instance()
@@ -114,7 +115,7 @@ internal class SyncViewModel(override val di: DI) :
 
             SyncEvent.ScanOn -> {
                 if (currentState.isScanning) return
-                discoveredServices.clear()
+                withContext(Dispatchers.Main) { discoveredServices.clear() }
                 scanJob = viewModelScope.launch(Dispatchers.IO) {
                     discoverServices(SERVICE_TYPE).collect { discoveryEvent: DiscoveryEvent ->
                         send(ServiceDiscovered(discoveryEvent))
@@ -132,19 +133,14 @@ internal class SyncViewModel(override val di: DI) :
 
     private suspend fun onServiceDiscovered(effect: ServiceDiscovered) {
         val discoveryEvent: DiscoveryEvent = effect.event
-        when (discoveryEvent) {
-            is DiscoveryEvent.Discovered -> {
-                discoveryEvent.resolve()
+        val services = withContext(Dispatchers.Main) {
+            when (discoveryEvent) {
+                is DiscoveryEvent.Discovered -> discoveryEvent.resolve()
+                is DiscoveryEvent.Removed ->  discoveredServices.remove(discoveryEvent.service.key)
+                is DiscoveryEvent.Resolved -> discoveredServices[discoveryEvent.service.key] = discoveryEvent.service
             }
-
-            is DiscoveryEvent.Removed -> {
-                discoveredServices.remove(discoveryEvent.service.key)
-            }
-
-            is DiscoveryEvent.Resolved -> {
-                discoveredServices[discoveryEvent.service.key] = discoveryEvent.service
-            }
+            discoveredServices.values.toList()
         }
-        setState { copy(scannedServices = discoveredServices.values.toList()) }
+        setState { copy(scannedServices = services) }
     }
 }
