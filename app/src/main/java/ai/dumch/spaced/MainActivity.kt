@@ -1,5 +1,6 @@
 package ai.dumch.spaced
 
+import ai.dumch.spaced.data.FileRepository
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -27,6 +28,13 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+
+        val fileRepo = FileRepository(application)
+        val files = fileRepo.list("/Documents/app_dump/wiki/repetition/")
+        files.forEach { println(it) }
+
+        val file = fileRepo.read("/Documents/app_dump/wiki/repetition/backend/cache.md")
+        println(file)
     }
 }
 
